@@ -1,13 +1,11 @@
 /*
-	baxz.y
-
-        flex baxz.l
-        bison baxz.y
-        g++ baxz.tab.c -o parser
-        parser < let_noErrors.txt > myoutput.out
-        diff myoutput.out fileName.txt.out --ignore-space-change --side-by-side --ignore-case --ignore-blank-lines --color
-        python3 Runner.py out HW4_sample_input HW4_expected_output
- */
+    flex baxz.l
+    bison baxz.y
+    g++ baxz.tab.c -o out
+    out let_noErrors.txt > myoutput.out
+    diff myoutput.out fileName.txt.out --ignore-space-change --side-by-side --ignore-case --ignore-blank-lines --color
+    python3 Runner.py out hw5_sampleInput hw5_expectedOutput
+*/
 
 %{
 #include <stdio.h>
@@ -31,6 +29,7 @@
 typedef struct
 {
   int type;       // one of the above type codes
+  char value;
   int numParams;  // numParams and returnType only applicableif type == FUNCTION
   int returnType;
 } TYPE_INFO;
@@ -110,6 +109,7 @@ N_START		: N_EXPR
 			{
 			printRule("START", "EXPR");
 			printf("\n---- Completed parsing ----\n\n");
+			printf("\nValue of the expression is:");
 			return 0;
 			}
 			;
@@ -352,9 +352,8 @@ N_PRINT_EXPR            : T_PRINT N_EXPR
             if ( $2.type == FUNCTION )
             {
                   yyerror("Arg 1 cannot be function");
-                  exit(1); 
+                  exit(1);
             }
-            $$.type = $2.type;
       }
       ;
 N_INPUT_EXPR            : T_INPUT

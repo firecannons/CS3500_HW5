@@ -12,7 +12,7 @@ mystr = ''
 
 for filename in os.listdir(InputFolder):
   filename2, file_extension = os.path.splitext(filename)
-  subproc_array = [ './' + ExecutableName , '<' , InputFolder + '/' + filename , '>' , OutputFolder + '/' + filename2 + '-my' + file_extension ]
+  subproc_array = [ './' + ExecutableName , InputFolder + '/' + filename , '>' , OutputFolder + '/' + filename2 + '-my' + file_extension ]
   proc_string = ''
   for Item in subproc_array :
     proc_string = proc_string + Item + ' '
@@ -20,9 +20,11 @@ for filename in os.listdir(InputFolder):
   os.system(proc_string)
   
   
-  subproc_array = [ 'diff' , OutputFolder + '/' + filename2 + file_extension + '.out' , OutputFolder + '/' + filename2 + '-my' + file_extension ]
+  subproc_array = [ 'diff' , OutputFolder + '/' + filename2 + file_extension + '.out' , OutputFolder + '/' + filename2 + '-my' + file_extension, '--ignore-space-change', '--side-by-side', '--ignore-case', '--ignore-blank-lines', '--color' ]
   proc_string = ''
   for Item in subproc_array :
     proc_string = proc_string + Item + ' '
   mystr = os.system(proc_string)
+  print ( "\n" )
   print ( proc_string )
+
