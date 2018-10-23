@@ -14,6 +14,7 @@
 #include <stack>
 #include <map>
 #include <iostream>
+using namespace std;
 
 #define UNDEFINED  -1   // Type codes
 #define FUNCTION 0
@@ -26,10 +27,12 @@
 #define INT_OR_STR_OR_BOOL 7
 #define NOT_APPLICABLE -1
 
+
 typedef struct
 {
   int type;       // one of the above type codes
-  char value;
+  //string Value;
+  char * value;
   int numParams;  // numParams and returnType only applicableif type == FUNCTION
   int returnType;
 } TYPE_INFO;
@@ -96,7 +99,7 @@ extern "C"
 %token T_NE
 %token T_NOT
 
-%type <text> T_IDENT N_BIN_OP N_ARITH_OP N_LOG_OP N_REL_OP
+%type <text> T_IDENT N_BIN_OP N_ARITH_OP N_LOG_OP N_REL_OP T_INTCONST
 %type <typeInfo> N_CONST N_EXPR N_PARENTHESIZED_EXPR N_IF_EXPR N_LAMBDA_EXPR N_ARITHLOGIC_EXPR N_LET_EXPR N_INPUT_EXPR N_PRINT_EXPR N_EXPR_LIST N_ID_LIST
 
 /* Starting point */
@@ -109,13 +112,14 @@ N_START		: N_EXPR
 			{
 			printRule("START", "EXPR");
 			printf("\n---- Completed parsing ----\n\n");
-			printf("\nValue of the expression is:");
+			printf("\nValue of the expression is: %s", $1.value);
 			return 0;
 			}
 			;
 N_EXPR    : N_CONST
       {
       $$.type = $1.type;
+      $$.value = $1.value;
       printRule("EXPR", "CONST");
       }
     | T_IDENT
@@ -136,6 +140,7 @@ N_EXPR    : N_CONST
       $$.type = $2.type;
       $$.numParams = $2.numParams;
       $$.returnType = $2.returnType;
+      $$.value = $2.value;
       }
       ;
 N_CONST   : T_INTCONST
@@ -144,6 +149,7 @@ N_CONST   : T_INTCONST
       $$.type = INT;
       $$.numParams = NOT_APPLICABLE;
       $$.returnType = NOT_APPLICABLE;
+      $$.value = $1;
       }
           | T_STRCONST
       {
@@ -167,6 +173,7 @@ N_PARENTHESIZED_EXPR    : N_ARITHLOGIC_EXPR
       {
       printRule("PARENTHESIZED_EXPR", "ARITHLOGIC_EXPR");
       $$.type = $1.type;
+      $$.value = $1.value;
       }
     | N_IF_EXPR
       {
@@ -252,6 +259,17 @@ N_ARITHLOGIC_EXPR      : N_UN_OP N_EXPR
                        yyerror("Arg 2 must be integer");
                        exit(1); 
                   }
+                  int num1 = atoi ( $2.value );
+                  int num2 = atoi ( $3.value );
+                  int result = 0 ;
+                  
+                  if ( strcmp ( $1 , "+") == 0 )
+                  {
+                        result = num1 + num2 ;
+                  }
+                  
+                  std::string s = std::to_string(result);
+                  $$.value = strdup(s.c_str());
             }
             if ( strcmp ( $1 , "and") == 0 || strcmp ( $1 , "or") == 0 )
             {

@@ -129,10 +129,12 @@ COMMENT           ";".*$
 			return T_NOT;
 			}
 {INTCONST}	     {
+			yylval.text = strdup(yytext);
 			printf("TOKEN: INTCONST  LEXEME: %s\n", yytext);
 			return T_INTCONST;
 			}
 {STRCONST}	     {
+			yylval.text = strdup(yytext);
 			printf("TOKEN: STRCONST  LEXEME: %s\n", yytext);
 			return T_STRCONST;
 			}
