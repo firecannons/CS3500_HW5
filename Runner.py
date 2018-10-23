@@ -20,11 +20,10 @@ for filename in os.listdir(InputFolder):
   os.system(proc_string)
   
   
-  subproc_array = [ 'diff' , OutputFolder + '/' + filename2 + file_extension + '.out' , OutputFolder + '/' + filename2 + '-my' + file_extension, '--ignore-space-change', '--side-by-side', '--ignore-case', '--ignore-blank-lines', '--color' ]
+  subproc_array = [ 'diff' , OutputFolder + '/' + filename2 + file_extension + '.out' , OutputFolder + '/' + filename2 + '-my' + file_extension, '--ignore-space-change', '--side-by-side', '--ignore-case', '--ignore-blank-lines' ]
   proc_string = ''
   for Item in subproc_array :
     proc_string = proc_string + Item + ' '
-  mystr = os.system(proc_string)
-  print ( "\n" )
   print ( proc_string )
-
+  mystr = os.system(proc_string)
+  print ( '\n\n\n\n' )
