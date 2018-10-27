@@ -140,7 +140,6 @@ N_EXPR		: N_CONST
                	}
                 $$.type = exprTypeInfo.type; 
 		$$.intValue = exprTypeInfo.intValue;
-		cout << ident << "\'s value is " << exprTypeInfo.intValue << "     type is " << exprTypeInfo.type << endl ;
 			}
                 | T_LPAREN N_PARENTHESIZED_EXPR T_RPAREN
                 {	
@@ -148,6 +147,7 @@ N_EXPR		: N_CONST
 			$$.type = $2.type; 
 			$$.boolValue = $2.boolValue;
 			$$.intValue = $2.intValue;
+			$$.strValue = $2.strValue;
 			}
 			;
 N_CONST		: T_INTCONST
@@ -189,7 +189,9 @@ N_PARENTHESIZED_EXPR	: N_ARITHLOGIC_EXPR
 				{
 				printRule("PARENTHESIZED_EXPR", "IF_EXPR");
 				$$.type = $1.type;
-				$$.intValue = $$.intValue;
+				$$.intValue = $1.intValue;
+				$$.strValue = $1.strValue;
+				$$.boolValue = $1.boolValue;
 				}
                       | N_LET_EXPR 
 				{
@@ -255,6 +257,23 @@ N_ARITHLOGIC_EXPR	: N_UN_OP N_EXPR
 			{
 				$$.intValue = $2.intValue - $3.intValue;
 			}
+			if ($1.specNum == DIV)
+			{
+				if($3.intValue == 0)
+				{
+					yyerror("Attempted division by zero");
+				}
+				else
+				{
+					$$.intValue = $2.intValue / $3.intValue;
+				}
+			}
+			if ($1.specNum == MULT)
+			{
+				$$.intValue = $2.intValue * $3.intValue;
+			}
+			$$.type = INT;
+			$$.boolValue = true;
                         break;
 
 			case (LOGICAL_OP) :
@@ -271,7 +290,6 @@ N_ARITHLOGIC_EXPR	: N_UN_OP N_EXPR
 			{
 				$$.type = BOOL;
 				$$.boolValue = false;
-				cout << "doing and " << $2.boolValue << " and " << $3.boolValue << endl ;
 				if ($2.boolValue == true && $3.boolValue == true)
 				{
 					$$.boolValue = true;
@@ -302,9 +320,10 @@ N_ARITHLOGIC_EXPR	: N_UN_OP N_EXPR
                                yyerror("Arg 2 must be string");
                                return(0);
                              }
+			
+			$$.type = BOOL;
 			if ($1.specNum == EQ)
 			{
-				$$.type = BOOL;
 				if(isStrCompatible($2.type) && isStrCompatible($3.type))
 				{
 					
@@ -318,6 +337,28 @@ N_ARITHLOGIC_EXPR	: N_UN_OP N_EXPR
 					}
 				}
 			}
+			if ($1.specNum == NE)
+			{
+				$$.boolValue = true;
+				if(isIntCompatible($2.type) && isIntCompatible($3.type))
+				{
+					if($2.intValue == $3.intValue)
+					{
+						$$.boolValue = false;
+					}
+				}
+			}
+			if ($1.specNum == LE)
+			{
+				$$.boolValue = false;
+				if(isIntCompatible($2.type) && isIntCompatible($3.type))
+				{
+					if($2.intValue <= $3.intValue)
+					{
+						$$.boolValue = true;
+					}
+				}
+			}
                         break; 
                       }  // end switch
 				}
@@ -325,17 +366,20 @@ N_ARITHLOGIC_EXPR	: N_UN_OP N_EXPR
 N_IF_EXPR    	: T_IF N_EXPR N_EXPR N_EXPR
 			{
 			printRule("IF_EXPR", "if EXPR EXPR EXPR");
+			$$.type = $3.type;
 			$$.intValue = $3.intValue;
+			$$.boolValue = $3.boolValue;
+			$$.strValue = $3.strValue;
 			if($2.type == BOOL)
 			{
 				if($2.boolValue == false)
 				{
+					$$.type = $4.type;
 					$$.intValue = $4.intValue;
+					$$.boolValue = $4.boolValue;
+					$$.strValue = $4.strValue;
 				}
 			}
-			cout << " if check value was " << $2.intValue << " result was " << $$.intValue << endl ;
-                $$.type = $3.type | $4.type; 
-		cout << " if result was " << $$.intValue << endl ;
 			}
 			;
 N_LET_EXPR      : T_LETSTAR T_LPAREN N_ID_EXPR_LIST T_RPAREN 
@@ -344,8 +388,8 @@ N_LET_EXPR      : T_LETSTAR T_LPAREN N_ID_EXPR_LIST T_RPAREN
 			printRule("LET_EXPR", 
 				    "let* ( ID_EXPR_LIST ) EXPR");
 			endScope();
-                $$.type = $5.type; 
-		$$.intValue = $5.intValue;
+			$$.type = $5.type; 
+			$$.intValue = $5.intValue;
 			}
 			;
 N_ID_EXPR_LIST  : /* epsilon */
@@ -358,7 +402,7 @@ N_ID_EXPR_LIST  : /* epsilon */
                           "ID_EXPR_LIST ( IDENT EXPR )");
 			string lexeme = string($3);
                  TYPE_INFO exprTypeInfo = $4;
-                 printf("___Adding %s to symbol table %i\n", $3, exprTypeInfo.intValue);
+                 printf("___Adding %s to symbol table\n", $3);
                  bool success = scopeStack.top().addEntry
                                 (SYMBOL_TABLE_ENTRY(lexeme,exprTypeInfo));
                  if (! success) 
@@ -371,7 +415,22 @@ N_ID_EXPR_LIST  : /* epsilon */
 N_PRINT_EXPR    : T_PRINT N_EXPR
 			{
 			printRule("PRINT_EXPR", "print EXPR");
-                $$.type = $2.type;
+			if ( $2.type == BOOL )
+			{
+				cout << $2.boolValue << endl;
+			}
+			else if ( $2.type == INT )
+			{
+				cout << $2.intValue << endl;
+			}
+			else
+			{
+				cout << $2.strValue << endl;
+			}
+			$$.type = $2.type;
+			$$.intValue = $2.intValue;
+			$$.boolValue = $2.boolValue;
+			$$.strValue = $2.strValue;
 			}
 			;
 N_INPUT_EXPR    : T_INPUT
@@ -383,12 +442,16 @@ N_INPUT_EXPR    : T_INPUT
 N_EXPR_LIST     : N_EXPR N_EXPR_LIST  
 			{
 			printRule("EXPR_LIST", "EXPR EXPR_LIST");
-                $$.type = $2.type;
+			$$.type = $2.type;
+			$$.intValue = $2.intValue;
+			$$.strValue = $2.strValue;
 			}
                 | N_EXPR
 			{
 			printRule("EXPR_LIST", "EXPR");
-                $$.type = $1.type;
+			$$.type = $1.type;
+			$$.intValue = $1.intValue;
+			$$.strValue = $1.strValue;
 			}
 			;
 N_BIN_OP	     : N_ARITH_OP
@@ -422,10 +485,12 @@ N_ARITH_OP	     : T_ADD
 			| T_MULT
 			{
 			printRule("ARITH_OP", "*");
+			$$.specNum = MULT;
 			}
 			| T_DIV
 			{
 			printRule("ARITH_OP", "/");
+			$$.specNum = DIV;
 			}
 			;
 N_REL_OP	     : T_LT
@@ -439,6 +504,7 @@ N_REL_OP	     : T_LT
 			| T_LE
 			{
 			printRule("REL_OP", "<=");
+			$$.specNum = LE;
 			}	
 			| T_GE
 			{
@@ -452,6 +518,7 @@ N_REL_OP	     : T_LT
 			| T_NE
 			{
 			printRule("REL_OP", "/=");
+			$$.specNum = NE;
 			}
 			;	
 N_LOG_OP	     : T_AND
