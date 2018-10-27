@@ -21,6 +21,7 @@
 #include <string>
 #include <stack>
 #include <string.h>
+#include <ctype.h>
 #include "SymbolTable.h"
 using namespace std;
 
@@ -436,7 +437,19 @@ N_PRINT_EXPR    : T_PRINT N_EXPR
 N_INPUT_EXPR    : T_INPUT
 			{
 			printRule("INPUT_EXPR", "input");
-			$$.type = INT_OR_STR;
+			string word;
+			getline (cin,word);
+			if(word[0] == '+' || word[0] == '-' || isdigit(word[0]))
+			{
+				$$.type = INT;
+				$$.intValue = atoi(word.c_str());
+			}
+			else
+			{
+				$$.type = STR;
+				$$.strValue = (char *)word.c_str();
+			}
+			
 			}
 			;
 N_EXPR_LIST     : N_EXPR N_EXPR_LIST  

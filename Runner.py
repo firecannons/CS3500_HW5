@@ -17,6 +17,7 @@ for filename in os.listdir(InputFolder):
   for Item in subproc_array :
     proc_string = proc_string + Item + ' '
   #subprocess.call( subproc_array )
+  print(proc_string)
   os.system(proc_string)
   
   

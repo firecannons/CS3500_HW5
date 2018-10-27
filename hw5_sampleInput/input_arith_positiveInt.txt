@@ -1,0 +1,1 @@
+( ( print "Enter something: " ) ( ( + 2 ( input ) ) ) )
