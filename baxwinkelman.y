@@ -88,7 +88,7 @@ extern "C" {
 %type <typeInfo> N_EXPR N_PARENTHESIZED_EXPR N_ARITHLOGIC_EXPR  
 %type <typeInfo> N_CONST N_IF_EXPR N_PRINT_EXPR N_INPUT_EXPR 
 %type <typeInfo> N_LET_EXPR N_EXPR_LIST  
-%type <typeInfo> N_BIN_OP N_UN_OP N_REL_OP
+%type <typeInfo> N_BIN_OP N_UN_OP N_REL_OP N_ARITH_OP N_LOG_OP
 
 /*
  *	Starting point.
@@ -114,6 +114,10 @@ N_START		: N_EXPR
 			{
 			    printf("\nValue of the expression is: %s", $1.strValue);
 			}
+			else
+			{
+			    printf("\nValue of the expression is: %i", $1.intValue);
+			}
 			return 0;
 			}
 			;
@@ -135,29 +139,36 @@ N_EXPR		: N_CONST
                   return(0);
                	}
                 $$.type = exprTypeInfo.type; 
+		$$.intValue = exprTypeInfo.intValue;
+		cout << ident << "\'s value is " << exprTypeInfo.intValue << "     type is " << exprTypeInfo.type << endl ;
 			}
                 | T_LPAREN N_PARENTHESIZED_EXPR T_RPAREN
                 {	
 			printRule("EXPR", "( PARENTHESIZED_EXPR )");
 			$$.type = $2.type; 
 			$$.boolValue = $2.boolValue;
+			$$.intValue = $2.intValue;
 			}
 			;
 N_CONST		: T_INTCONST
 			{
 			printRule("CONST", "INTCONST");
-                $$.type = INT; 
+			$$.type = INT; 
+			$$.intValue = atoi($1);
+			$$.boolValue = true;
 			}
                 | T_STRCONST
 			{
 			printRule("CONST", "STRCONST");
 			$$.type = STR;
 			$$.strValue = $1;
+			$$.boolValue = true;
 			}
                 | T_T
                 {
 			printRule("CONST", "t");
-                $$.type = BOOL; 
+			$$.type = BOOL; 
+			$$.boolValue = true;
 			}
                 | T_NIL
                 {
@@ -172,11 +183,13 @@ N_PARENTHESIZED_EXPR	: N_ARITHLOGIC_EXPR
                                 "ARITHLOGIC_EXPR");
 				$$.type = $1.type; 
 				$$.boolValue = $1.boolValue;
+				$$.intValue = $1.intValue;
 				}
                       | N_IF_EXPR 
 				{
 				printRule("PARENTHESIZED_EXPR", "IF_EXPR");
-				$$.type = $1.type; 
+				$$.type = $1.type;
+				$$.intValue = $$.intValue;
 				}
                       | N_LET_EXPR 
 				{
@@ -233,9 +246,37 @@ N_ARITHLOGIC_EXPR	: N_UN_OP N_EXPR
                           yyerror("Arg 2 must be integer");
                           return(0);
                      	  }
+			
+			if ($1.specNum == ADD)
+			{
+				$$.intValue = $2.intValue + $3.intValue;
+			}
+			if ($1.specNum == SUB)
+			{
+				$$.intValue = $2.intValue - $3.intValue;
+			}
                         break;
 
-				case (LOGICAL_OP) :
+			case (LOGICAL_OP) :
+			if ($1.specNum == OR)
+			{
+				$$.type = BOOL;
+				$$.boolValue = true;
+				if ($2.boolValue == false && $3.boolValue == false)
+				{
+					$$.boolValue = false;
+				}
+			}
+			else if ($1.specNum == AND)
+			{
+				$$.type = BOOL;
+				$$.boolValue = false;
+				cout << "doing and " << $2.boolValue << " and " << $3.boolValue << endl ;
+				if ($2.boolValue == true && $3.boolValue == true)
+				{
+					$$.boolValue = true;
+				}
+			}
                         break;
 
                       case (RELATIONAL_OP) :
@@ -284,7 +325,17 @@ N_ARITHLOGIC_EXPR	: N_UN_OP N_EXPR
 N_IF_EXPR    	: T_IF N_EXPR N_EXPR N_EXPR
 			{
 			printRule("IF_EXPR", "if EXPR EXPR EXPR");
+			$$.intValue = $3.intValue;
+			if($2.type == BOOL)
+			{
+				if($2.boolValue == false)
+				{
+					$$.intValue = $4.intValue;
+				}
+			}
+			cout << " if check value was " << $2.intValue << " result was " << $$.intValue << endl ;
                 $$.type = $3.type | $4.type; 
+		cout << " if result was " << $$.intValue << endl ;
 			}
 			;
 N_LET_EXPR      : T_LETSTAR T_LPAREN N_ID_EXPR_LIST T_RPAREN 
@@ -294,6 +345,7 @@ N_LET_EXPR      : T_LETSTAR T_LPAREN N_ID_EXPR_LIST T_RPAREN
 				    "let* ( ID_EXPR_LIST ) EXPR");
 			endScope();
                 $$.type = $5.type; 
+		$$.intValue = $5.intValue;
 			}
 			;
 N_ID_EXPR_LIST  : /* epsilon */
@@ -306,10 +358,9 @@ N_ID_EXPR_LIST  : /* epsilon */
                           "ID_EXPR_LIST ( IDENT EXPR )");
 			string lexeme = string($3);
                  TYPE_INFO exprTypeInfo = $4;
-                 printf("___Adding %s to symbol table\n", $3);
+                 printf("___Adding %s to symbol table %i\n", $3, exprTypeInfo.intValue);
                  bool success = scopeStack.top().addEntry
-                                (SYMBOL_TABLE_ENTRY(lexeme,
-									 exprTypeInfo));
+                                (SYMBOL_TABLE_ENTRY(lexeme,exprTypeInfo));
                  if (! success) 
                  {
                    yyerror("Multiply defined identifier");
@@ -361,10 +412,12 @@ N_BIN_OP	     : N_ARITH_OP
 N_ARITH_OP	     : T_ADD
 			{
 			printRule("ARITH_OP", "+");
+			$$.specNum = ADD;
 			}
-                | T_SUB
+			| T_SUB
 			{
 			printRule("ARITH_OP", "-");
+			$$.specNum = SUB;
 			}
 			| T_MULT
 			{
@@ -404,10 +457,12 @@ N_REL_OP	     : T_LT
 N_LOG_OP	     : T_AND
 			{
 			printRule("LOG_OP", "and");
+			$$.specNum = AND;
 			}	
 			| T_OR
 			{
 			printRule("LOG_OP", "or");
+			$$.specNum = OR;
 			}
 			;
 N_UN_OP	     : T_NOT

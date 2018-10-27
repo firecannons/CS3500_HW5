@@ -46,6 +46,9 @@ public:
   {
     name = theName;
     typeInfo.type = theType.type;
+    typeInfo.intValue = theType.intValue;
+    typeInfo.strValue = theType.strValue;
+    typeInfo.boolValue = theType.boolValue;
   }
 
   // Accessors
