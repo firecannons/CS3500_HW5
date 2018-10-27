@@ -1,21 +1,18 @@
-/*    baxz.l
+/*    mfpl.l
  
  	Specifications of tokens for the MFPL language.
-     
-  	To create the lexical analyzer:
-
-   	flex baxz..l
-     	g++ lex.yy.c -o baxz_lexer
-     	baxz_lexer < inputFileName
  */
+
+%{
+
+%}
 
 /*
  *	Definitions of regular expressions
 */
 
 WSPACE		[ \t\r]+
-NEWLINE     [\n]
-
+NEWLINE          \n
 LO_ALPHA		[a-z]
 HI_ALPHA		[A-Z]
 ALPHA			{LO_ALPHA}|{HI_ALPHA}
@@ -88,17 +85,12 @@ COMMENT           ";".*$
 			}
 "let*"		{
 			printf("TOKEN: LETSTAR   LEXEME: %s\n", yytext);
-            beginScope();
+			beginScope();
 			return T_LETSTAR;
 			}
 "if"			{
 			printf("TOKEN: IF        LEXEME: %s\n", yytext);
 			return T_IF;
-			}
-"lambda"		{
-			printf("TOKEN: LAMBDA    LEXEME: %s\n", yytext);
-            beginScope();
-			return T_LAMBDA;
 			}
 "print"		{
 			printf("TOKEN: PRINT     LEXEME: %s\n", yytext);
@@ -129,24 +121,32 @@ COMMENT           ";".*$
 			return T_NOT;
 			}
 {INTCONST}	     {
-			yylval.text = strdup(yytext);
 			printf("TOKEN: INTCONST  LEXEME: %s\n", yytext);
+			yylval.text = strdup(yytext);
 			return T_INTCONST;
 			}
 {STRCONST}	     {
-			yylval.text = strdup(yytext);
 			printf("TOKEN: STRCONST  LEXEME: %s\n", yytext);
+			yylval.text = strdup(yytext);
 			return T_STRCONST;
 			}
 {IDENT}		{
-            yylval.text = strdup(yytext);
 			printf("TOKEN: IDENT     LEXEME: %s\n", yytext);
+			yylval.text = strdup(yytext);
 			return T_IDENT;
 			}
 {WSPACE}		{ }
+{NEWLINE}       {
+                 lineNum++;
+                }
 {COMMENT}		{ }
-{NEWLINE}	{
-			numLines++;
+.			{
+			printf("TOKEN: UNKNOWN   LEXEME: %s\n",
+			       yytext);
+			return T_UNKNOWN;
 			}
 
 %%
+
+
+

@@ -4,32 +4,53 @@
 #include <string>
 using namespace std;
 
+#define UNDEFINED  			-1   // Type codes
+#define INT				1
+#define STR				2
+#define INT_OR_STR			3
+#define BOOL				4
+#define INT_OR_BOOL			5
+#define STR_OR_BOOL			6
+#define INT_OR_STR_OR_BOOL		7
+
+   
+#define NOT_APPLICABLE 	-1
+
+typedef struct 
+{ 
+  int type;       // one of the above type codes
+  int intValue;
+  char * strValue;
+  bool boolValue;
+  int num;
+  int specNum;
+} TYPE_INFO;
+
 class SYMBOL_TABLE_ENTRY 
 {
 private:
   // Member variables
   string name;
-  int typeCode;
-  int numParams;
-  int returnType;
+  TYPE_INFO typeInfo;
 
 public:
   // Constructors
-  SYMBOL_TABLE_ENTRY( ) { name = ""; typeCode = UNDEFINED; int numParams = 0 ; int returnType = UNDEFINED ; }
+  SYMBOL_TABLE_ENTRY( ) 
+  { 
+    name = ""; 
+    typeInfo.type = UNDEFINED; 
+  }
 
-  SYMBOL_TABLE_ENTRY(const string theName, const int theType , int theNumParams = 0 , int theReturnType = UNDEFINED) 
+  SYMBOL_TABLE_ENTRY(const string theName, 
+                     const TYPE_INFO theType) 
   {
     name = theName;
-    typeCode = theType;
-    numParams = theNumParams;
-    returnType = theReturnType;
+    typeInfo.type = theType.type;
   }
 
   // Accessors
   string getName() const { return name; }
-  int getTypeCode() const { return typeCode; }
-  int getNumParams() const { return numParams; }
-  int getReturnType() const { return returnType; }
+  TYPE_INFO getTypeInfo() const { return typeInfo; }
 };
 
 #endif  // SYMBOL_TABLE_ENTRY_H
